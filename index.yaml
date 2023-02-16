@@ -3,12 +3,12 @@ entries:
   nfs-server:
   - apiVersion: v2
     appVersion: 4.2-1-gcsfuse
-    created: "2023-02-16T07:42:24.137565458Z"
+    created: "2023-02-16T08:08:29.769246582Z"
     description: NFS server with GCS Fuse on K8S
     digest: ccf4af5fce73388833e4ed05f6855dbe5e047aada9a8ca2aaa039502eb939f98
     name: nfs-server
     type: application
     urls:
-    - nfs-server-0.1.0.tgz
+    - https://tranhailong.github.io/charts/helpers/nfs-server-0.1.0.tgz
     version: 0.1.0
-generated: "2023-02-16T07:42:24.136821796Z"
+generated: "2023-02-16T08:08:29.768514258Z"
