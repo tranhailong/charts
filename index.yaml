@@ -1,14 +1,24 @@
 apiVersion: v1
 entries:
   nfs-server:
-  - apiVersion: v2
+  - annotations:
+      artifacthub.io/images: |
+        - name: nfs-server
+          image: tranhailong/nfs-server:4.2-1-gcsfuse
+      artifacthub.io/links: |
+        - name: github
+          url: https://github.com/tranhailong/nfs-server
+      artifacthub.io/maintainers: |
+        - name: tranhailong
+          email: hailong.tran@squareroot.one
+    apiVersion: v2
     appVersion: 4.2-1-gcsfuse
-    created: "2023-02-16T08:08:29.769246582Z"
+    created: "2023-02-16T10:04:26.623446016Z"
     description: NFS server with GCS Fuse on K8S
-    digest: ccf4af5fce73388833e4ed05f6855dbe5e047aada9a8ca2aaa039502eb939f98
+    digest: 7d5833c9ae4580486cd789cbf54f8b8d6b7c332e32a6a4c3ec7f57daaea1ea2d
     name: nfs-server
     type: application
     urls:
-    - https://tranhailong.github.io/charts/helpers/nfs-server-0.1.0.tgz
-    version: 0.1.0
-generated: "2023-02-16T08:08:29.768514258Z"
+    - https://tranhailong.github.io/charts/helpers/nfs-server-0.1.1.tgz
+    version: 0.1.1
+generated: "2023-02-16T10:04:26.622674395Z"
