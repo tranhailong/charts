@@ -1,0 +1,49 @@
+# Default values for nfs-server.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# This section for names and version overrides
+apiVersion: "v1"
+namespaceOverride: "nfs"
+nameOverride: "nfs-server"
+fullnameOverride: ""
+
+# This section to manage the image
+image:
+  repository: "tranhailong/nfs-server"
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  #tag: ""
+
+imagePullSecrets: []
+
+# This section to manage service account
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "nfs-server"
+
+# This section to manage custom service port and exposure type
+service:
+  type: ClusterIP  # or LoadBalancer to get public IP at a cost
+  port: 2049
+
+# This section to manage custom annotations and selectors
+nodeSelector: {}
+podAnnotations: {}
+
+# This section to manage custom scaling and resources
+replicaCount: 1
+autoscaling:
+  enabled: false
+resources: {}
+
+# This section is used if volume is mounted directly from Persistent Disk instead of from GCS Fuse, to be implemented
+volumes:
+  enabled: false
+
+# Default requirements, do not override
+securityContext:
+  privileged: true

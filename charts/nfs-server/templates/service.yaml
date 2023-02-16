@@ -1,0 +1,16 @@
+apiVersion: {{ .Values.apiVersion }}
+kind: Service
+metadata:
+  name: {{ include "nfs-server.fullname" . }}
+  namespace: {{ include "nfs-server.namespace" .}}
+  labels:
+    {{- include "nfs-server.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      #targetPort: http
+      #protocol: TCP
+      name: nfs
+  selector:
+    {{- include "nfs-server.selectorLabels" . | nindent 4 }}
