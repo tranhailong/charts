@@ -22,4 +22,38 @@ entries:
     urls:
     - https://github.com/tranhailong/charts/releases/download/nfs-server-0.1.2/nfs-server-0.1.2.tgz
     version: 0.1.2
-generated: "2023-02-20T03:30:33.22624709Z"
+  synapse:
+  - annotations:
+      artifacthub.io/category: integration-delivery
+      artifacthub.io/images: |
+        - name: matrixdotorg/synapse
+          image: matrixdotorg/synapse:v1.77.0
+      artifacthub.io/links: |
+        - name: chart source
+          url: https://github.com/tranhailong/charts/tree/master/charts/synapse
+        - name: app source
+          url: https://github.com/matrix-org/synapse
+        - name: matrix home
+          url: https://matrix.org/
+      artifacthub.io/maintainers: |
+        - name: tranhailong
+          email: hailong.tran@squareroot.one
+    apiVersion: v2
+    appVersion: v1.77.0
+    created: "2023-03-02T09:45:20.242533035Z"
+    dependencies:
+    - name: common
+      repository: https://library-charts.k8s-at-home.com
+      version: 4.5.2
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 12.2.2
+    description: Vanilla Matrix's Synapse Homeserver
+    digest: 7c238e6419e9e52c268abed3fc2ed22b7b5912d03d8654e44a49cb9fe091d011
+    name: synapse
+    type: application
+    urls:
+    - https://github.com/tranhailong/charts/releases/download/synapse-0.1.0/synapse-0.1.0.tgz
+    version: 0.1.0
+generated: "2023-03-02T09:45:20.242543535Z"
