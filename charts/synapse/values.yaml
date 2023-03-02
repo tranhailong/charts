@@ -1,0 +1,255 @@
+global:
+  # -- Set an override for the prefix of the fullname
+  nameOverride:
+  # -- Set the entire name definition
+  fullnameOverride:
+  # -- Set additional global labels. Helm templates can be used.
+  labels: {}
+  # -- Set additional global annotations. Helm templates can be used.
+  annotations: {}
+  storageClass: standard
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  registry: ""  # if not null, must end with "/" to join with repository below
+  repository: "{{ .Values.image.registry }}matrixdotorg/synapse"
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "v1.78.0"
+
+appConfig:
+  # NOTE: overrides on key maps will override only the exact path.
+  # overrides on lists will override the whole list, can't handle element-wise addition / override
+
+  homeserver:
+    # This will be merged with and override defaults set in _homeserver.yaml
+    # Follows the key conventions per synapse official documentations
+    server_name: "example.com"
+    #public_baseurl: 'https://matrix.{{ .Values.appConfig.homeserver.server_name }}'  # override if you don't like this default format
+    #admin_contact: 'mailto:your.email.address@gmail.com'
+
+    # Defaults - sensible enough, not likely to override
+    #listeners:
+      #- port: 8008
+      #  tls: false
+      #  type: http
+      #  x_forwarded: true
+      #  resources:
+      #    - names: [client, federation]
+      #      compress: false
+    #trusted_key_servers:
+      #- server_name: "matrix.org"
+      #  verify_keys: true
+      #  accept_keys_insecurely: true
+
+    # These are additional settings as you install more bridges and add-ons
+    experimental_features:
+      faster_joins: true  # lazy loading remote room joins (improve sync performance on matrix hq)
+      
+    # This bit is from halkeye for redis and worker i think
+    #redis:
+      # homeserver.redis.enabled -- If you want workers/distributed processing, you want redis as of 1.67
+      # https://matrix-org.github.io/synapse/v1.67/upgrade.html#direct-tcp-replication-is-no-longer-supported-migrate-to-redis
+      #enabled: true
+      #host:  synapse-redis-master.matrix.svc.cluster.local
+      #password: 'set-your-password'
+    # Don't send federation from main proc
+    #send_federation: false
+
+    # Secrets
+    # if use the default sqlite3, need to comment this out, uncomment and enable persistence.db
+    database:
+      name: psycopg2
+      args:
+        user: "{{ .Values.postgresql.auth.username }}"
+        password: "{{ .Values.postgresql.auth.password }}"
+        database: "{{ .Values.postgresql.auth.database }}"
+        host: '{{ printf "%v-%v" .Release.Name "postgresql" }}'
+        port: 5432
+        cp_min: 5
+        cp_max: 10
+    #registration_shared_secret: "50-len-key"
+    macaroon_secret_key: "50-len-key"
+    form_secret: "50-len-key"
+    
+    # registration and captcha
+    enable_registration: true
+    enable_registration_captcha: true
+    recaptcha_public_key: "40-len-key"  # YOUR_SITE_KEY
+    recaptcha_private_key: "40-len-key"  # YOUR_SECRET_KEY
+
+    # email for notifications
+    #email:
+      #smtp_host: smtp.gmail.com
+      #smtp_port: 587
+      #smtp_user: "your.email.address@gmail.com"
+      #smtp_pass: "your-password"
+      #force_tls: true
+      #require_transport_security: true
+      #enable_tls: true
+      #notif_from: "Your Friendly %(app)s homeserver <your.email.address@gmail.com>"
+      #app_name: Matrix
+      #validation_token_lifetime: 15m
+      #invite_client_location: https://app.element.io
+
+  # these are from halkeye, not sure what it does
+  extra_python_modules:
+    - https://github.com/devture/matrix-synapse-shared-secret-auth/archive/refs/tags/2.0.2.zip
+    - https://github.com/t2bot/synapse-simple-antispam/archive/refs/heads/master.zip#egg=synapse-simple-antispam
+  
+  federation_sender:
+    worker_app: synapse.app.federation_sender
+    # The replication listener on the synapse to talk to.
+    worker_replication_host: '{{/* include "synapse.fullname" . */}}'
+    worker_replication_http_port: 9093
+    worker_listeners:
+      - type: http
+        port: 8083
+        resources:
+          - names: [federation]
+    worker_log_config: "/config/log.config"
+    redis:
+      # homeserver.redis.enabled -- If you want workers/distributed processing, you want redis as of 1.67
+      # https://matrix-org.github.io/synapse/v1.67/upgrade.html#direct-tcp-replication-is-no-longer-supported-migrate-to-redis
+      enabled: true
+      host:  synapse-redis-master.matrix.svc.cluster.local
+      ## homeserver.redis.password -- Password to connect to redis
+      password: 'set-your-own-password'
+
+  #log:
+  #signingKey: "ed25519 key_name 43-len-key"
+
+persistence:
+  config:
+    enabled: true
+    type: secret
+    name: synapse-config
+    mountPath: /data/config  # homeserver.yaml.log_config homeserver.yaml.signing_key_path
+  media:
+    enabled: true
+    type: pvc
+    mountPath: /data/media_store  # homeserver.yaml.media_store_path, large HDD if possible
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    storageClass: standard
+    retain: false
+  data:
+    enabled: true
+    type: emptyDir
+    mountPath: /data  # homeserver.yaml.pid_file, not sure anything else will go here
+  db:
+    enabled: false  # enable if use sqlite3 instead of psycopg2
+    type: pvc
+    mountPath: /data/db  # homeserver.yaml.database.args.database, large HDD if possible
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    storageClass: standard    
+    retain: false
+
+env:
+  - name: SYNAPSE_CONFIG_PATH
+    value: "{{ .Values.persistence.config.mountPath }}/homeserver.yaml"
+
+initContainers:
+#controller:
+
+service:
+  main:
+    ports:
+      http:
+        port: 8008
+
+secret:
+  #tls.crt: |
+  #  public-key
+  #tls.key: |
+  #  private-key
+
+# Additional ingresses can be added by adding a dictionary key similar to the 'main' ingress.
+ingress:
+  main:
+    enabled: true
+    #primary: true
+    hosts:
+      - host: "matrix.{{ .Values.appConfig.homeserver.server_name }}"
+        paths:
+          - path: /
+    tls:
+      #- hosts:
+      #    - "matrix.{{ .Values.appConfig.homeserver.server_name }}"
+      #  secretName: '{{ include "common.names.fullname" . }}'  # secret created in .Values.secret
+
+    # -- Provide additional annotations which may be required.
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      kubernetes.io/tls-acme: "true"
+    
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "15.2-alpine"
+  auth:
+    username: synapse
+    password: set-your-own-password  # how to set this more securely
+    database: synapse
+  primary:
+    initdb:
+      args: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+# This is to bypass quirk on bitnami/postgresql that throws error on template evaluation
+metrics:
+  service:
+    ports:
+      metrics:
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+replicaCount: 1
+
+resources:
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  #limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  #capabilities:
+  #  drop:
+  #  - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -1,0 +1,5 @@
+{{ include "common.notes.defaultNotes" . }}
+{{ if empty .Values.appConfig.signingKey -}}
+2. Run this command to get the signing key, pass into values.yaml and redeploy
+  kubectl exec -it $POD_NAME -n matrix -- cat {{ .Values.persistence.data.mountPath }}/example.com.signing.key
+{{- end }}
