@@ -1,0 +1,7 @@
+{{/* evaluate all templated values */}}
+{{- $values := tpl (toYaml .Values) . }}
+{{- $values := fromYaml $values }}
+{{- $_ := set . "Values" (deepCopy $values) -}}
+
+{{ include "common.all" . }}
+{{ include "synapse.config" . }}
